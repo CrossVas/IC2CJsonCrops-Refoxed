@@ -1,0 +1,52 @@
+{
+  "id": "examplemod:example",
+  "name": "ic2.crop.example", //Translation key for crop
+  "discoveredBy": "Example",
+  "displayItem": "minecraft:diamond", // can be either a string or an object
+  "properties": { //all these fields are required
+    "tier": 1,
+    "chemistry": 2,
+    "consumable": 3,
+    "defensive": 3,
+    "colorful": 4,
+    "weed": 5
+  },
+  "attributes": [
+    "Yellow",
+    "Light"
+  ],
+  "textures": [ //must be as many textures as there are growth stages, as defined in growthSteps
+    "ic2:block/crops/reed/growing_0",
+    "ic2:block/crops/reed/growing_1",
+    "ic2:block/crops/reed/growing_reed_2"
+  ],
+  "growthSteps": 3,
+  "drops": [
+    {
+      "item": "minecraft:diamond",
+      "count": 1
+    }
+  ],
+  //optional
+  "cropType" : "AIR", //valid options are AIR, WATER, BOTH
+  "optimalHarvestStep": 3, //if omitted defaults to growthSteps
+  "stages": [ //if omitted or left empty,  uses the defaults defined below. Also the last one in this list is used for it's stage and all stages after. stage number is determined by position in list
+    { //all fields in this object are optional
+      "growth": 600, //if omitted, defaults to tier in properties object * 200
+      "minLightLevel": 1, //defaults to 0
+      "maxLightLevel": 14, //defaults to 15
+      "minHumidity": 0, //defaults to -1, which means it gets ignored
+      "maxHumidity": 9, //defaults to -1, which means it gets ignored
+      "blocksBelow": [ //list of valid blocks/block tags
+        "minecraft:dirt"
+      ]
+    }
+  ],
+  "droppingSeeds": true, //whether this crop can drop seeds if seed mode is enabled
+  "seedDrops": [
+    {
+      "item": "minecraft:dirt",
+      "count": 1
+    }
+  ]
+}

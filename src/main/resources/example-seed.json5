@@ -1,0 +1,8 @@
+{
+  "crop": "examplemod:example",
+  "stage": 1,
+  "growth": 1,
+  "gain": 1,
+  "resistance": 1,
+  "stack_size": 1
+}
