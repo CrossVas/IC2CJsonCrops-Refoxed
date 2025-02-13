@@ -12,8 +12,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.fml.loading.FMLPaths;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -144,54 +148,49 @@ public class CropUtils {
     }
 
     public static void readFromFile(String path, Consumer<JsonObject> function) {
-        File cropJsons = new File(FMLPaths.CONFIGDIR.get().toFile(), "ic2c/" + path);
-        File[] files = cropJsons.listFiles();
+        Path cropJsonsPath = FMLPaths.CONFIGDIR.get().resolve("ic2c").resolve(path);
 
-        if (files == null) {
+        if (!Files.exists(cropJsonsPath) || !Files.isDirectory(cropJsonsPath)) {
             return;
         }
 
-        for (File cropJson : files) {
-            if (cropJson.isFile() && cropJson.getAbsolutePath().endsWith(".json")) {
-                String additionalError = null;
-                try (BufferedReader reader = Files.newBufferedReader(cropJson.toPath())) {
-                    JsonObject parsed = JsonParser.parseReader(reader).getAsJsonObject();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(cropJsonsPath)) {
+            for (Path filePath : stream) {
+                if (Files.isRegularFile(filePath) && filePath.toString().endsWith(".json")) {
+                    String additionalError = null;
                     try {
-                        function.accept(parsed);
+                        JsonObject parsed = JsonParser.parseReader(Files.newBufferedReader(filePath)).getAsJsonObject();
+                        try {
+                            function.accept(parsed);
+                        } catch (Exception e) {
+                            additionalError = parsed.toString();
+                            throw e;
+                        }
                     } catch (Exception e) {
-                        additionalError = parsed.toString();
-                        throw e;
+                        if (additionalError != null) {
+                            IC2CJsonCrops.LOGGER.error(additionalError);
+                        }
+                        IC2CJsonCrops.LOGGER.error("JSON not valid!", e);
                     }
-                } catch (Exception e) {
-                    if (additionalError != null) {
-                        IC2CJsonCrops.LOGGER.error(additionalError);
-                    }
-                    IC2CJsonCrops.LOGGER.error("Crop JSON not valid!", e);
                 }
             }
+        } catch (IOException e) {
+            IC2CJsonCrops.LOGGER.error("Error reading JSON files", e);
         }
     }
 
     public static void writeExampleConfig(String subDir, String readName) {
-        File dir = new File(FMLPaths.CONFIGDIR.get().toFile(), "ic2c/" + subDir);
-        File target = new File(dir, readName);
+        Path dir = FMLPaths.CONFIGDIR.get().resolve("ic2c").resolve(subDir);
+        Path target = dir.resolve(readName);
 
         try {
-            dir.mkdirs();
-            InputStream in = IC2CJsonCrops.class.getResourceAsStream("/" + readName);
-            if (in == null) {
-                throw new IOException("Resource not found: " + readName);
+            Files.createDirectories(dir);
+            try (InputStream in = IC2CJsonCrops.class.getResourceAsStream("/" + readName)) {
+                if (in == null) {
+                    throw new IOException("Resource not found: " + readName);
+                }
+                Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
             }
-            FileOutputStream out = new FileOutputStream(target);
-
-            byte[] buf = new byte[16384];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
-            }
-
-            in.close();
-            out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
