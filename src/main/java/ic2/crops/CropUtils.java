@@ -156,7 +156,12 @@ public class CropUtils {
                 String additionalError = null;
                 try (BufferedReader reader = Files.newBufferedReader(cropJson.toPath())) {
                     JsonObject parsed = JsonParser.parseReader(reader).getAsJsonObject();
-                    function.accept(parsed);
+                    try {
+                        function.accept(parsed);
+                    } catch (Exception e) {
+                        additionalError = parsed.toString();
+                        throw e;
+                    }
                 } catch (Exception e) {
                     if (additionalError != null) {
                         IC2CJsonCrops.LOGGER.error(additionalError);
